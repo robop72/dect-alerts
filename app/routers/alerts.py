@@ -134,11 +134,11 @@ def twiml_handler(alert_id: int, db: Session = Depends(get_db)):
 
     twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Gather numDigits="1" action="{action_url}" method="POST" timeout="30">
+  <Gather numDigits="1" action="{action_url}" method="POST" timeout="60">
     <Say language="{lang}" voice="{voice}">{message}</Say>
     <Say language="{lang}" voice="{voice}">Press 1 now to acknowledge this alert.</Say>
   </Gather>
-  <Say language="{lang}" voice="{voice}">No response received. Alert has been escalated.</Say>
+  <Redirect method="POST">{settings.PUBLIC_BASE_URL}/alerts/twiml/{alert_id}</Redirect>
 </Response>"""
     return HTMLResponse(content=twiml, media_type="application/xml")
 
