@@ -67,7 +67,7 @@ def _seed_demo_data():
         db.close()
 
 
-app = FastAPI(title="Pontosense Response Assurance Layer", version="1.2.0", lifespan=lifespan)
+app = FastAPI(title="Voxii AI — Alert Response Dashboard", version="1.2.0", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 app.include_router(alerts.router)
 app.include_router(roster.router)
