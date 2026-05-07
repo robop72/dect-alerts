@@ -1,0 +1,6 @@
+staff_name,role,phone_number,zone_id,on_duty
+Sarah Mitchell,Registered Nurse,+61400000000,1,true
+James Chen,Care Assistant,+61411111111,1,true
+Priya Sharma,Registered Nurse,+61422222222,,true
+Tom Walsh,Team Leader,+61433333333,,true
+Emma Davis,Care Assistant,+61444444444,1,false

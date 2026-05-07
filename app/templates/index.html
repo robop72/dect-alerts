@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pontosense — Response Assurance Dashboard</title>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #232636;
+      --border: #2e3148;
+      --text: #e2e8f0;
+      --muted: #8b92a5;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --green: #22c55e;
+      --red: #ef4444;
+      --orange: #f97316;
+      --yellow: #eab308;
+      --blue: #3b82f6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* Nav */
+    .nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+    .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; }
+    .nav-brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .nav-sub { font-size: .75rem; color: var(--muted); font-weight: 400; }
+
+    /* Layout */
+    .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+    /* Stats grid */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; }
+    .stat-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: .5rem; }
+    .stat-value { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .stat-value.green { color: var(--green); }
+    .stat-value.red { color: var(--red); }
+    .stat-value.orange { color: var(--orange); }
+    .stat-value.blue { color: var(--blue); }
+
+    /* Two-column */
+    .grid2 { display: grid; grid-template-columns: 340px 1fr; gap: 1.5rem; align-items: start; }
+    @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+
+    /* Card */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .card-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); font-weight: 600; font-size: .9rem; display: flex; align-items: center; gap: .5rem; }
+    .card-body { padding: 1.5rem; }
+
+    /* Form */
+    label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: .35rem; margin-top: 1rem; }
+    label:first-child { margin-top: 0; }
+    select, input[type=text] {
+      width: 100%; padding: .55rem .8rem; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: .9rem; outline: none;
+    }
+    select:focus, input:focus { border-color: var(--accent); }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .6rem 1.2rem; border-radius: 8px; border: none; cursor: pointer; font-size: .875rem; font-weight: 600; transition: .15s; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-danger { background: var(--red); color: #fff; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-green { background: var(--green); color: #000; }
+    .btn-green:hover { background: #16a34a; color: #fff; }
+    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-sm { padding: .35rem .8rem; font-size: .78rem; }
+    .btn-full { width: 100%; justify-content: center; margin-top: 1rem; }
+
+    /* Alert table */
+    .alert-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    .alert-table th { padding: .6rem 1rem; text-align: left; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border-bottom: 1px solid var(--border); }
+    .alert-table td { padding: .75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .alert-table tr:last-child td { border-bottom: none; }
+    .alert-table tr:hover td { background: var(--surface2); }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; gap: .3rem; padding: .25rem .65rem; border-radius: 999px; font-size: .72rem; font-weight: 600; }
+    .badge.pending   { background: rgba(234,179,8,.15);  color: var(--yellow); }
+    .badge.calling   { background: rgba(59,130,246,.15); color: var(--blue); }
+    .badge.acknowledged { background: rgba(34,197,94,.15); color: var(--green); }
+    .badge.escalated { background: rgba(239,68,68,.15);  color: var(--red); }
+    .badge.no_response { background: rgba(107,114,128,.15); color: var(--muted); }
+    .badge.high { background: rgba(239,68,68,.15); color: var(--red); }
+    .badge.low  { background: rgba(34,197,94,.12); color: var(--green); }
+
+    .blink { animation: blink 1s step-start infinite; }
+    @keyframes blink { 50%{opacity:0} }
+
+    /* Log */
+    .log-pre { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; font-family: 'SF Mono', monospace; font-size: .72rem; white-space: pre-wrap; color: var(--muted); max-height: 180px; overflow-y: auto; margin-top: .5rem; }
+
+    /* Divider */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+
+    /* htmx indicator */
+    .htmx-indicator { opacity: 0; transition: opacity 200ms; }
+    .htmx-request .htmx-indicator { opacity: 1; }
+
+    .empty-state { text-align: center; padding: 3rem; color: var(--muted); }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: .75rem; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="dot"></div>
+    Pontosense
+    <span class="nav-sub">Response Assurance Layer v1.2</span>
+  </div>
+  <div style="font-size:.8rem;color:var(--muted)">
+    {% if demo_mode %}<span style="color:var(--yellow)">⚡ DEMO MODE</span>{% endif %}
+    &nbsp; Auto-refresh every 5s
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats"
+       hx-get="/partials/alerts"
+       hx-trigger="load, every 5s"
+       hx-target="#live-panel"
+       hx-swap="innerHTML">
+    <div class="stat-card">
+      <div class="stat-label">Total Alerts</div>
+      <div class="stat-value blue">{{ summary.total }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Acknowledged</div>
+      <div class="stat-value green">{{ summary.acknowledged }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Escalated</div>
+      <div class="stat-value red">{{ summary.escalated }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pending / Calling</div>
+      <div class="stat-value orange">{{ summary.pending }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg Response</div>
+      <div class="stat-value" style="color:var(--accent)">
+        {% if summary.avg_response_seconds %}{{ summary.avg_response_seconds | ceil_minutes }} min{% else %}—{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+
+    <!-- Left panel: Trigger alerts -->
+    <div>
+      <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-header">🚨 Trigger Test Alert</div>
+        <div class="card-body">
+          <form hx-post="/alerts/simulate-alert"
+                hx-target="#live-panel"
+                hx-swap="innerHTML"
+                hx-on::after-request="this.reset()">
+
+            <label>Facility</label>
+            <select name="facility_id">
+              {% for f in facilities %}
+              <option value="{{ f.id }}">{{ f.name }} ({{ f.location }})</option>
+              {% endfor %}
+            </select>
+
+            <label>Alert Type</label>
+            <select name="alert_type">
+              <option value="Fall">Fall Detected</option>
+              <option value="Bed Exit">Bed Exit</option>
+              <option value="Wandering">Wandering Alert</option>
+              <option value="Call">Nurse Call</option>
+              <option value="No Movement">No Movement (4hr)</option>
+            </select>
+
+            <label>Room Number</label>
+            <input type="text" name="room_number" value="14" placeholder="e.g. 14" required />
+
+            <label>Risk Level</label>
+            <select name="risk_level">
+              <option value="high">High — triggers call</option>
+              <option value="low">Low — log only, no escalation</option>
+            </select>
+
+            <button type="submit" class="btn btn-danger btn-full">
+              ⚡ Trigger Alert
+            </button>
+          </form>
+
+          <hr class="divider" />
+
+          <!-- Quick demo buttons -->
+          <p style="font-size:.75rem;color:var(--muted);margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.06em">Quick Demo</p>
+
+          <button class="btn btn-ghost btn-full"
+                  style="margin-bottom:.5rem"
+                  hx-post="/alerts/simulate-alert"
+                  hx-vals='{"facility_id":1,"alert_type":"Fall","room_number":"14","risk_level":"high"}'
+                  hx-target="#live-panel"
+                  hx-swap="innerHTML">
+            🏃 Fall — Room 14 (High Risk)
+          </button>
+
+          <button class="btn btn-ghost btn-full"
+                  style="margin-bottom:.5rem"
+                  hx-post="/alerts/simulate-alert"
+                  hx-vals='{"facility_id":1,"alert_type":"Bed Exit","room_number":"7","risk_level":"low"}'
+                  hx-target="#live-panel"
+                  hx-swap="innerHTML">
+            🛏️ Bed Exit — Room 7 (Low Risk, no call)
+          </button>
+
+          <button class="btn btn-ghost btn-full"
+                  hx-post="/alerts/simulate-alert"
+                  hx-vals='{"facility_id":1,"alert_type":"Wandering","room_number":"22","risk_level":"high"}'
+                  hx-target="#live-panel"
+                  hx-swap="innerHTML">
+            🚶 Wandering — Room 22 (Escalation test)
+          </button>
+        </div>
+      </div>
+
+      <!-- Roster upload -->
+      <div class="card">
+        <div class="card-header">👥 Upload Roster CSV</div>
+        <div class="card-body">
+          <form hx-post="/roster/upload-csv"
+                hx-encoding="multipart/form-data"
+                hx-target="#roster-result"
+                hx-swap="innerHTML">
+            <input type="hidden" name="facility_id" value="1" />
+            <label>CSV File</label>
+            <input type="file" name="file" accept=".csv"
+                   style="color:var(--muted);font-size:.85rem;width:100%" />
+            <button type="submit" class="btn btn-primary btn-full" style="margin-top:1rem">
+              Upload Roster
+            </button>
+          </form>
+          <div id="roster-result" style="margin-top:.75rem;font-size:.8rem;color:var(--green)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel: Live alerts -->
+    <div class="card">
+      <div class="card-header">
+        📡 Live Alert Feed
+        <span class="htmx-indicator" style="margin-left:auto;font-size:.75rem;color:var(--muted)">↻ refreshing…</span>
+      </div>
+      <div id="live-panel"
+           hx-get="/partials/alerts"
+           hx-trigger="load, every 5s"
+           hx-swap="innerHTML">
+        {% include "partials/alerts_table.html" %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

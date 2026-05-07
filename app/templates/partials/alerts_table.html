@@ -1,0 +1,76 @@
+{% if not alerts %}
+<div class="empty-state">
+  <div class="icon">📭</div>
+  <p>No alerts yet — trigger one using the panel on the left.</p>
+</div>
+{% else %}
+<div style="overflow-x:auto">
+<table class="alert-table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Type</th>
+      <th>Room</th>
+      <th>Risk</th>
+      <th>Status</th>
+      <th>Received</th>
+      <th>Response</th>
+      <th>Telephony</th>
+      {% if demo_mode %}<th>Action</th>{% endif %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for alert in alerts %}
+    <tr id="alert-row-{{ alert.id }}">
+      <td style="color:var(--muted);font-size:.8rem">#{{ alert.id }}</td>
+      <td style="font-weight:600">{{ alert.alert_type }}</td>
+      <td>{{ alert.room_number }}</td>
+      <td><span class="badge {{ alert.risk_level }}">{{ alert.risk_level | upper }}</span></td>
+      <td>
+        <span class="badge {{ alert.status }}{% if alert.status == 'calling' %} blink{% endif %}">
+          {% if alert.status == 'pending' %}⏳{% elif alert.status == 'calling' %}📞{% elif alert.status == 'acknowledged' %}✅{% elif alert.status == 'escalated' %}🔺{% else %}—{% endif %}
+          {{ alert.status | replace('_',' ') | title }}
+        </span>
+      </td>
+      <td style="color:var(--muted);font-size:.8rem;white-space:nowrap">
+        {{ alert.timestamp_received.strftime('%H:%M:%S') }}
+      </td>
+      <td style="font-weight:600;color:{% if alert.response_time_seconds and alert.response_time_seconds < 120 %}var(--green){% elif alert.response_time_seconds %}var(--orange){% else %}var(--muted){% endif %}">
+        {% if alert.response_time_seconds is not none %}{{ alert.response_time_seconds | ceil_minutes }} min{% else %}—{% endif %}
+      </td>
+      <td style="font-size:.8rem;color:var(--muted)">{{ alert.used_telephony or '—' }}</td>
+      {% if demo_mode %}
+      <td>
+        {% if alert.status in ['pending', 'calling'] %}
+        <button class="btn btn-green btn-sm"
+                hx-post="/alerts/simulate-ack/{{ alert.id }}"
+                hx-target="#ack-result-{{ alert.id }}"
+                hx-swap="innerHTML">
+          Simulate Press 1
+        </button>
+        {% endif %}
+        <span id="ack-result-{{ alert.id }}"></span>
+      </td>
+      {% endif %}
+    </tr>
+    <!-- Log row -->
+    {% if alert.full_log and alert.full_log.strip() %}
+    <tr>
+      <td colspan="{% if demo_mode %}9{% else %}8{% endif %}" style="padding:0 1rem .75rem 3rem">
+        <pre class="log-pre">{{ alert.full_log.strip() }}</pre>
+      </td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<!-- Summary strip -->
+<div style="padding:.75rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:2rem;font-size:.8rem;color:var(--muted)">
+  <span>Total: <strong style="color:var(--text)">{{ summary.total }}</strong></span>
+  <span>Ack'd: <strong style="color:var(--green)">{{ summary.acknowledged }}</strong></span>
+  <span>Escalated: <strong style="color:var(--red)">{{ summary.escalated }}</strong></span>
+  {% if summary.avg_response_seconds %}<span>Avg response: <strong style="color:var(--accent)">{{ summary.avg_response_seconds | ceil_minutes }} min</strong></span>{% endif %}
+</div>
+{% endif %}
