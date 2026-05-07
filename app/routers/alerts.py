@@ -11,6 +11,8 @@ from ..database import get_db
 from ..models import Alert, Facility, RosterEntry
 from ..schemas import AlertCreate, AlertResponse
 from ..services import telephony, tts
+from ..services.reporting import get_summary
+from ..templating import templates
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/alerts", tags=["alerts"])
@@ -21,19 +23,26 @@ def _log(alert: Alert, message: str):
     alert.full_log = (alert.full_log or "") + f"\n[{ts}] {message}"
 
 
-@router.post("/simulate-alert", response_model=AlertResponse)
-def simulate_alert(payload: AlertCreate, db: Session = Depends(get_db)):
-    facility = db.get(Facility, payload.facility_id)
+@router.post("/simulate-alert", response_class=HTMLResponse)
+def simulate_alert(
+    facility_id: int = Form(...),
+    alert_type: str = Form(...),
+    room_number: str = Form(...),
+    risk_level: str = Form("high"),
+    zone_id: Optional[int] = Form(None),
+    db: Session = Depends(get_db),
+):
+    facility = db.get(Facility, facility_id)
     if not facility:
         raise HTTPException(status_code=404, detail="Facility not found")
 
-    # Low-risk bed exit → log only, no call
-    if payload.risk_level == "low":
+    # Low-risk → log only, no call
+    if risk_level == "low":
         alert = Alert(
-            facility_id=payload.facility_id,
-            zone_id=payload.zone_id,
-            alert_type=payload.alert_type,
-            room_number=payload.room_number,
+            facility_id=facility_id,
+            zone_id=zone_id,
+            alert_type=alert_type,
+            room_number=room_number,
             risk_level="low",
             status="acknowledged",
             acknowledged_at=datetime.utcnow(),
@@ -41,81 +50,76 @@ def simulate_alert(payload: AlertCreate, db: Session = Depends(get_db)):
             used_telephony="none",
             full_log="",
         )
-        _log(alert, f"LOW-RISK alert received — {payload.alert_type} Room {payload.room_number} — no escalation")
+        _log(alert, f"LOW-RISK alert received — {alert_type} Room {room_number} — no escalation")
         db.add(alert)
         db.commit()
         db.refresh(alert)
-        return alert
-
-    alert = Alert(
-        facility_id=payload.facility_id,
-        zone_id=payload.zone_id,
-        alert_type=payload.alert_type,
-        room_number=payload.room_number,
-        risk_level=payload.risk_level,
-        status="pending",
-    )
-    db.add(alert)
-    db.commit()
-    db.refresh(alert)
-    _log(alert, f"Alert received — {payload.alert_type} Room {payload.room_number} ({payload.risk_level} risk)")
-
-    # Roster lookup — find on-duty staff for this zone/facility
-    staff = (
-        db.query(RosterEntry)
-        .filter(
-            RosterEntry.facility_id == payload.facility_id,
-            RosterEntry.on_duty == True,
+    else:
+        alert = Alert(
+            facility_id=facility_id,
+            zone_id=zone_id,
+            alert_type=alert_type,
+            room_number=room_number,
+            risk_level=risk_level,
+            status="pending",
         )
-        .first()
-    )
-
-    if not staff:
-        _log(alert, "No on-duty staff found — alert pending manual response")
-        db.commit()
-        return alert
-
-    _log(alert, f"Roster match: {staff.staff_name} ({staff.role}) → {staff.phone_number}")
-
-    if settings.DEMO_MODE and not settings.TWILIO_ACCOUNT_SID:
-        alert.status = "calling"
-        _log(alert, "DEMO MODE — simulated call initiated (use 'Simulate Press 1' to acknowledge)")
-        alert.used_telephony = "simulated"
+        db.add(alert)
         db.commit()
         db.refresh(alert)
-        return alert
+        _log(alert, f"Alert received — {alert_type} Room {room_number} ({risk_level} risk)")
 
-    # Generate TTS audio
-    try:
-        tts.generate_alert_audio(payload.alert_type, payload.room_number, facility.location, alert.id)
-        _log(alert, f"TTS audio generated ({facility.location} voice)")
-    except Exception as e:
-        _log(alert, f"TTS generation failed: {e} — falling back to Twilio <Say>")
+        staff = (
+            db.query(RosterEntry)
+            .filter(RosterEntry.facility_id == facility_id, RosterEntry.on_duty == True)
+            .first()
+        )
 
-    # Build TwiML webhook URL
-    twiml_url = f"{settings.PUBLIC_BASE_URL}/alerts/twiml/{alert.id}"
+        if not staff:
+            _log(alert, "No on-duty staff found — alert pending manual response")
+            db.commit()
+        else:
+            _log(alert, f"Roster match: {staff.staff_name} ({staff.role}) → {staff.phone_number}")
 
-    status_callback_url = f"{settings.PUBLIC_BASE_URL}/alerts/call-status/{alert.id}"
+            if settings.DEMO_MODE and not settings.TWILIO_ACCOUNT_SID:
+                alert.status = "calling"
+                _log(alert, "DEMO MODE — simulated call initiated (use 'Simulate Press 1' to acknowledge)")
+                alert.used_telephony = "simulated"
+                db.commit()
+            else:
+                try:
+                    tts.generate_alert_audio(alert_type, room_number, facility.location, alert.id)
+                    _log(alert, f"TTS audio generated ({facility.location} voice)")
+                except Exception as e:
+                    _log(alert, f"TTS generation failed: {e} — falling back to Twilio <Say>")
 
-    call_sid = telephony.make_twilio_call(
-        to_number=staff.phone_number,
-        twiml_url=twiml_url,
-        from_number=settings.TWILIO_FROM_NUMBER,
-        account_sid=settings.TWILIO_ACCOUNT_SID,
-        auth_token=settings.TWILIO_AUTH_TOKEN,
-        status_callback_url=status_callback_url,
-    )
+                twiml_url = f"{settings.PUBLIC_BASE_URL}/alerts/twiml/{alert.id}"
+                status_callback_url = f"{settings.PUBLIC_BASE_URL}/alerts/call-status/{alert.id}"
 
-    if call_sid:
-        alert.status = "calling"
-        alert.used_telephony = "twilio"
-        _log(alert, f"Twilio call started — SID: {call_sid}")
-    else:
-        _log(alert, "Twilio call failed — alert remains pending")
+                call_sid = telephony.make_twilio_call(
+                    to_number=staff.phone_number,
+                    twiml_url=twiml_url,
+                    from_number=settings.TWILIO_FROM_NUMBER,
+                    account_sid=settings.TWILIO_ACCOUNT_SID,
+                    auth_token=settings.TWILIO_AUTH_TOKEN,
+                    status_callback_url=status_callback_url,
+                )
 
-    db.commit()
+                if call_sid:
+                    alert.status = "calling"
+                    alert.used_telephony = "twilio"
+                    _log(alert, f"Twilio call started — SID: {call_sid}")
+                else:
+                    _log(alert, "Twilio call failed — alert remains pending")
+
+                db.commit()
+
     db.refresh(alert)
-    return alert
+    alerts = db.query(Alert).order_by(Alert.id.desc()).all()
+    summary = get_summary(db)
+    return templates.TemplateResponse(
+        "partials/alerts_table.html",
+        {"request": {}, "alerts": alerts, "summary": summary, "demo_mode": settings.DEMO_MODE},
+    )
 
 
 @router.api_route("/twiml/{alert_id}", methods=["GET", "POST"], response_class=HTMLResponse)

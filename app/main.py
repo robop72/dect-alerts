@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from .config import settings
@@ -14,12 +13,10 @@ from .models import Alert, Facility, RosterEntry, Zone
 from .routers import alerts, reports, roster
 from .services.escalation import start_scheduler, stop_scheduler
 from .services.reporting import get_recent_alerts, get_summary
+from .templating import templates
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s")
 logger = logging.getLogger(__name__)
-
-templates = Jinja2Templates(directory="app/templates")
-templates.env.filters["ceil_minutes"] = lambda s: max(1, round(s / 60))
 
 
 @asynccontextmanager
