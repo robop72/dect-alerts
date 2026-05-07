@@ -95,12 +95,15 @@ def simulate_alert(payload: AlertCreate, db: Session = Depends(get_db)):
     # Build TwiML webhook URL
     twiml_url = f"{settings.PUBLIC_BASE_URL}/alerts/twiml/{alert.id}"
 
+    status_callback_url = f"{settings.PUBLIC_BASE_URL}/alerts/call-status/{alert.id}"
+
     call_sid = telephony.make_twilio_call(
         to_number=staff.phone_number,
         twiml_url=twiml_url,
         from_number=settings.TWILIO_FROM_NUMBER,
         account_sid=settings.TWILIO_ACCOUNT_SID,
         auth_token=settings.TWILIO_AUTH_TOKEN,
+        status_callback_url=status_callback_url,
     )
 
     if call_sid:
@@ -200,6 +203,30 @@ def simulate_ack(alert_id: int, db: Session = Depends(get_db)):
     return HTMLResponse(
         content=f"<span class='badge acknowledged'>Acknowledged in {mins} min</span>"
     )
+
+
+@router.post("/call-status/{alert_id}", response_class=HTMLResponse)
+def call_status(
+    alert_id: int,
+    CallStatus: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    """Twilio posts call lifecycle events here."""
+    alert = db.get(Alert, alert_id)
+    if not alert:
+        return HTMLResponse(content="", status_code=200)
+
+    _log(alert, f"Twilio call status: {CallStatus}")
+
+    if CallStatus in ("no-answer", "busy", "failed") and alert.status == "calling":
+        alert.status = "missed"
+        _log(alert, f"Call {CallStatus} — alert marked missed")
+    elif CallStatus == "completed" and alert.status == "calling":
+        alert.status = "missed"
+        _log(alert, "Call completed without acknowledgment — alert marked missed")
+
+    db.commit()
+    return HTMLResponse(content="", status_code=200)
 
 
 def _acknowledge_alert(alert: Alert):

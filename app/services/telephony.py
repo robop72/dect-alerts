@@ -10,6 +10,7 @@ def make_twilio_call(
     from_number: str,
     account_sid: str,
     auth_token: str,
+    status_callback_url: Optional[str] = None,
 ) -> Optional[str]:
     """Initiate a Twilio call and return the call SID, or None on failure."""
     if not account_sid or not auth_token or not from_number:
@@ -19,7 +20,12 @@ def make_twilio_call(
         from twilio.rest import Client
 
         client = Client(account_sid, auth_token)
-        call = client.calls.create(to=to_number, from_=from_number, url=twiml_url)
+        kwargs = dict(to=to_number, from_=from_number, url=twiml_url)
+        if status_callback_url:
+            kwargs["status_callback"] = status_callback_url
+            kwargs["status_callback_method"] = "POST"
+            kwargs["status_callback_event"] = ["completed", "no-answer", "busy", "failed"]
+        call = client.calls.create(**kwargs)
         logger.info(f"Twilio call started: {call.sid} → {to_number}")
         return call.sid
     except Exception as e:

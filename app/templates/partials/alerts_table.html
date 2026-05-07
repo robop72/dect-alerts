@@ -28,7 +28,7 @@
       <td><span class="badge {{ alert.risk_level }}">{{ alert.risk_level | upper }}</span></td>
       <td>
         <span class="badge {{ alert.status }}{% if alert.status == 'calling' %} blink{% endif %}">
-          {% if alert.status == 'pending' %}⏳{% elif alert.status == 'calling' %}📞{% elif alert.status == 'acknowledged' %}✅{% elif alert.status == 'escalated' %}🔺{% else %}—{% endif %}
+          {% if alert.status == 'pending' %}⏳{% elif alert.status == 'calling' %}📞{% elif alert.status == 'acknowledged' %}✅{% elif alert.status == 'escalated' %}🔺{% elif alert.status == 'missed' %}📵{% else %}—{% endif %}
           {{ alert.status | replace('_',' ') | title }}
         </span>
       </td>
