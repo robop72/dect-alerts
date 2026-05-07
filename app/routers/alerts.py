@@ -125,7 +125,7 @@ def twiml_handler(alert_id: int, db: Session = Depends(get_db)):
     facility = db.get(Facility, alert.facility_id)
     location = facility.location if facility else "NA"
     lang_map  = {"AU": "en-AU",       "NA": "en-US",        "UK": "en-GB"}
-    voice_map = {"AU": "Polly.Nicole", "NA": "Polly.Joanna", "UK": "Polly.Amy"}
+    voice_map = {"AU": "alice", "NA": "alice", "UK": "alice"}
     lang  = lang_map.get(location.upper(), "en-US")
     voice = voice_map.get(location.upper(), "Polly.Joanna")
 
