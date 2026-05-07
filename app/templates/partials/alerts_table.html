@@ -36,7 +36,7 @@
         {{ alert.timestamp_received.strftime('%H:%M:%S') }}
       </td>
       <td style="font-weight:600;color:{% if alert.response_time_seconds and alert.response_time_seconds < 120 %}var(--green){% elif alert.response_time_seconds %}var(--orange){% else %}var(--muted){% endif %}">
-        {% if alert.response_time_seconds is not none %}{{ alert.response_time_seconds | ceil_minutes }} min{% else %}—{% endif %}
+        {% if alert.response_time_seconds is not none %}{{ alert.response_time_seconds | int }}s{% else %}—{% endif %}
       </td>
       <td style="font-size:.8rem;color:var(--muted)">{{ alert.used_telephony or '—' }}</td>
       {% if demo_mode %}
@@ -71,6 +71,6 @@
   <span>Total: <strong style="color:var(--text)">{{ summary.total }}</strong></span>
   <span>Ack'd: <strong style="color:var(--green)">{{ summary.acknowledged }}</strong></span>
   <span>Escalated: <strong style="color:var(--red)">{{ summary.escalated }}</strong></span>
-  {% if summary.avg_response_seconds %}<span>Avg response: <strong style="color:var(--accent)">{{ summary.avg_response_seconds | ceil_minutes }} min</strong></span>{% endif %}
+  {% if summary.avg_response_seconds %}<span>Avg response: <strong style="color:var(--primary)">{{ summary.avg_response_seconds | int }}s</strong></span>{% endif %}
 </div>
 {% endif %}

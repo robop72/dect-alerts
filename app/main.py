@@ -1,6 +1,7 @@
 import logging
 import math
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse
@@ -67,6 +68,7 @@ def _seed_demo_data():
 
 
 app = FastAPI(title="Pontosense Response Assurance Layer", version="1.2.0", lifespan=lifespan)
+app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 app.include_router(alerts.router)
 app.include_router(roster.router)
 app.include_router(reports.router)

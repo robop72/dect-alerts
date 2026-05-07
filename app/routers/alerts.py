@@ -203,9 +203,8 @@ def simulate_ack(alert_id: int, db: Session = Depends(get_db)):
     _log(alert, "Simulated Press 1 — acknowledged via dashboard button")
     db.commit()
     db.refresh(alert)
-    mins = max(1, round(alert.response_time_seconds / 60))
     return HTMLResponse(
-        content=f"<span class='badge acknowledged'>Acknowledged in {mins} min</span>"
+        content=f"<span class='badge acknowledged'>Acknowledged in {int(alert.response_time_seconds)}s</span>"
     )
 
 

@@ -7,97 +7,110 @@
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <style>
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #232636;
-      --border: #2e3148;
-      --text: #e2e8f0;
-      --muted: #8b92a5;
-      --accent: #6366f1;
-      --accent-hover: #818cf8;
-      --green: #22c55e;
-      --red: #ef4444;
-      --orange: #f97316;
-      --yellow: #eab308;
-      --blue: #3b82f6;
+      --bg: #f4f4f5;
+      --surface: #ffffff;
+      --surface2: #f4f4f5;
+      --border: #e4e4e7;
+      --text: #171717;
+      --muted: #71717a;
+      --primary: #4263f0;
+      --primary-hover: #2f4fd4;
+      --navy: #0D2147;
+      --teal: #00B4C8;
+      --teal-light: #e0f9fb;
+      --green: #16a34a;
+      --green-bg: #f0fdf4;
+      --red: #dc2626;
+      --red-bg: #fef2f2;
+      --orange: #ea580c;
+      --orange-bg: #fff7ed;
+      --yellow: #ca8a04;
+      --yellow-bg: #fefce8;
+      --blue: #2563eb;
+      --blue-bg: #eff6ff;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
     /* Nav */
-    .nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 56px; }
-    .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; }
-    .nav-brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-    .nav-sub { font-size: .75rem; color: var(--muted); font-weight: 400; }
+    .nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .nav-logo svg { height: 36px; width: auto; }
+    .nav-divider { width: 1px; height: 24px; background: var(--border); }
+    .nav-subtitle { font-size: .78rem; color: var(--muted); font-weight: 500; }
+    .nav-right { display: flex; align-items: center; gap: 1rem; font-size: .82rem; color: var(--muted); }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 5px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
     /* Layout */
     .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
 
     /* Stats grid */
     .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; }
-    .stat-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: .5rem; }
-    .stat-value { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+    .stat-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: .5rem; font-weight: 600; }
+    .stat-value { font-size: 2rem; font-weight: 700; line-height: 1; color: var(--navy); }
     .stat-value.green { color: var(--green); }
     .stat-value.red { color: var(--red); }
     .stat-value.orange { color: var(--orange); }
     .stat-value.blue { color: var(--blue); }
+    .stat-value.primary { color: var(--primary); }
 
     /* Two-column */
     .grid2 { display: grid; grid-template-columns: 340px 1fr; gap: 1.5rem; align-items: start; }
     @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
 
     /* Card */
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-    .card-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); font-weight: 600; font-size: .9rem; display: flex; align-items: center; gap: .5rem; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+    .card-header { padding: .9rem 1.5rem; border-bottom: 1px solid var(--border); font-weight: 600; font-size: .875rem; display: flex; align-items: center; gap: .5rem; color: var(--navy); background: var(--surface); }
     .card-body { padding: 1.5rem; }
 
     /* Form */
-    label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: .35rem; margin-top: 1rem; }
+    label { display: block; font-size: .78rem; color: var(--muted); margin-bottom: .3rem; margin-top: 1rem; font-weight: 600; letter-spacing: .02em; }
     label:first-child { margin-top: 0; }
-    select, input[type=text] {
-      width: 100%; padding: .55rem .8rem; background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text); font-size: .9rem; outline: none;
+    select, input[type=text], input[type=file] {
+      width: 100%; padding: .55rem .8rem; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: .875rem; outline: none;
+      transition: border-color .15s;
     }
-    select:focus, input:focus { border-color: var(--accent); }
+    select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(66,99,240,.1); }
 
     /* Buttons */
-    .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .6rem 1.2rem; border-radius: 8px; border: none; cursor: pointer; font-size: .875rem; font-weight: 600; transition: .15s; }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover { background: var(--accent-hover); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; padding: .6rem 1.2rem; border-radius: 8px; border: none; cursor: pointer; font-size: .875rem; font-weight: 600; transition: .15s; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
     .btn-danger { background: var(--red); color: #fff; }
-    .btn-danger:hover { background: #dc2626; }
-    .btn-green { background: var(--green); color: #000; }
-    .btn-green:hover { background: #16a34a; color: #fff; }
-    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-    .btn-sm { padding: .35rem .8rem; font-size: .78rem; }
-    .btn-full { width: 100%; justify-content: center; margin-top: 1rem; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-green:hover { background: #15803d; }
+    .btn-ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); background: var(--blue-bg); }
+    .btn-sm { padding: .3rem .75rem; font-size: .78rem; }
+    .btn-full { width: 100%; margin-top: 1rem; }
 
     /* Alert table */
     .alert-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
-    .alert-table th { padding: .6rem 1rem; text-align: left; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border-bottom: 1px solid var(--border); }
+    .alert-table th { padding: .6rem 1rem; text-align: left; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 700; background: #fafafa; }
     .alert-table td { padding: .75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
     .alert-table tr:last-child td { border-bottom: none; }
-    .alert-table tr:hover td { background: var(--surface2); }
+    .alert-table tr:hover td { background: #fafafa; }
 
     /* Badges */
     .badge { display: inline-flex; align-items: center; gap: .3rem; padding: .25rem .65rem; border-radius: 999px; font-size: .72rem; font-weight: 600; }
-    .badge.pending   { background: rgba(234,179,8,.15);  color: var(--yellow); }
-    .badge.calling   { background: rgba(59,130,246,.15); color: var(--blue); }
-    .badge.acknowledged { background: rgba(34,197,94,.15); color: var(--green); }
-    .badge.escalated { background: rgba(239,68,68,.15);  color: var(--red); }
-    .badge.no_response { background: rgba(107,114,128,.15); color: var(--muted); }
-    .badge.missed { background: rgba(249,115,22,.15); color: var(--orange); }
-    .badge.high { background: rgba(239,68,68,.15); color: var(--red); }
-    .badge.low  { background: rgba(34,197,94,.12); color: var(--green); }
+    .badge.pending   { background: var(--yellow-bg); color: var(--yellow); }
+    .badge.calling   { background: var(--blue-bg);   color: var(--blue); }
+    .badge.acknowledged { background: var(--green-bg); color: var(--green); }
+    .badge.escalated { background: var(--red-bg);    color: var(--red); }
+    .badge.no_response { background: var(--surface2); color: var(--muted); }
+    .badge.missed { background: var(--orange-bg); color: var(--orange); }
+    .badge.high { background: var(--red-bg); color: var(--red); }
+    .badge.low  { background: var(--green-bg); color: var(--green); }
 
     .blink { animation: blink 1s step-start infinite; }
     @keyframes blink { 50%{opacity:0} }
 
     /* Log */
-    .log-pre { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; font-family: 'SF Mono', monospace; font-size: .72rem; white-space: pre-wrap; color: var(--muted); max-height: 180px; overflow-y: auto; margin-top: .5rem; }
+    .log-pre { background: #fafafa; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; font-family: 'SF Mono', 'Consolas', monospace; font-size: .72rem; white-space: pre-wrap; color: var(--muted); max-height: 180px; overflow-y: auto; margin-top: .5rem; }
 
     /* Divider */
     .divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
@@ -108,30 +121,29 @@
 
     .empty-state { text-align: center; padding: 3rem; color: var(--muted); }
     .empty-state .icon { font-size: 2.5rem; margin-bottom: .75rem; }
+
+    /* Demo mode badge */
+    .demo-badge { background: #fef9c3; color: #854d0e; border: 1px solid #fde68a; border-radius: 6px; padding: .25rem .6rem; font-size: .72rem; font-weight: 700; letter-spacing: .04em; }
   </style>
 </head>
 <body>
 
 <nav class="nav">
-  <div class="nav-brand">
-    <div class="dot"></div>
-    Pontosense
-    <span class="nav-sub">Response Assurance Layer v1.2</span>
+  <div class="nav-logo">
+    <span style="font-size:1.1rem;font-weight:800;color:var(--navy);letter-spacing:-.02em;">Pontosense</span>
+    <div class="nav-divider"></div>
+    <span class="nav-subtitle">Alert Response Dashboard</span>
   </div>
-  <div style="font-size:.8rem;color:var(--muted)">
-    {% if demo_mode %}<span style="color:var(--yellow)">⚡ DEMO MODE</span>{% endif %}
-    &nbsp; Auto-refresh every 5s
+  <div class="nav-right">
+    {% if demo_mode %}<span class="demo-badge">⚡ DEMO</span>{% endif %}
+    <span><span class="live-dot"></span>Live · auto-refresh 5s</span>
   </div>
 </nav>
 
 <div class="container">
 
   <!-- Stats -->
-  <div class="stats"
-       hx-get="/partials/alerts"
-       hx-trigger="load, every 5s"
-       hx-target="#live-panel"
-       hx-swap="innerHTML">
+  <div class="stats">
     <div class="stat-card">
       <div class="stat-label">Total Alerts</div>
       <div class="stat-value blue">{{ summary.total }}</div>
@@ -150,8 +162,8 @@
     </div>
     <div class="stat-card">
       <div class="stat-label">Avg Response</div>
-      <div class="stat-value" style="color:var(--accent)">
-        {% if summary.avg_response_seconds %}{{ summary.avg_response_seconds | ceil_minutes }} min{% else %}—{% endif %}
+      <div class="stat-value primary">
+        {% if summary.avg_response_seconds %}{{ summary.avg_response_seconds | int }}s{% else %}—{% endif %}
       </div>
     </div>
   </div>
@@ -201,49 +213,47 @@
           <hr class="divider" />
 
           <!-- Quick demo buttons -->
-          <p style="font-size:.75rem;color:var(--muted);margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.06em">Quick Demo</p>
+          <p style="font-size:.72rem;color:var(--muted);margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700">Quick Demo</p>
 
-          <button class="btn btn-ghost btn-full"
-                  style="margin-bottom:.5rem"
-                  hx-post="/alerts/simulate-alert"
-                  hx-vals='{"facility_id":1,"alert_type":"Fall","room_number":"14","risk_level":"high"}'
-                  hx-target="#live-panel"
-                  hx-swap="innerHTML">
-            🏃 Fall — Room 14 (High Risk)
-          </button>
+          <form hx-post="/alerts/simulate-alert" hx-target="#live-panel" hx-swap="innerHTML" style="margin-bottom:.5rem">
+            <input type="hidden" name="facility_id" value="1" />
+            <input type="hidden" name="alert_type" value="Fall" />
+            <input type="hidden" name="room_number" value="14" />
+            <input type="hidden" name="risk_level" value="high" />
+            <button type="submit" class="btn btn-ghost btn-full">🏃 Fall — Room 14 (High Risk)</button>
+          </form>
 
-          <button class="btn btn-ghost btn-full"
-                  style="margin-bottom:.5rem"
-                  hx-post="/alerts/simulate-alert"
-                  hx-vals='{"facility_id":1,"alert_type":"Bed Exit","room_number":"7","risk_level":"low"}'
-                  hx-target="#live-panel"
-                  hx-swap="innerHTML">
-            🛏️ Bed Exit — Room 7 (Low Risk, no call)
-          </button>
+          <form hx-post="/alerts/simulate-alert" hx-target="#live-panel" hx-swap="innerHTML" style="margin-bottom:.5rem">
+            <input type="hidden" name="facility_id" value="1" />
+            <input type="hidden" name="alert_type" value="Bed Exit" />
+            <input type="hidden" name="room_number" value="7" />
+            <input type="hidden" name="risk_level" value="low" />
+            <button type="submit" class="btn btn-ghost btn-full">🛏️ Bed Exit — Room 7 (Low Risk, no call)</button>
+          </form>
 
-          <button class="btn btn-ghost btn-full"
-                  hx-post="/alerts/simulate-alert"
-                  hx-vals='{"facility_id":1,"alert_type":"Wandering","room_number":"22","risk_level":"high"}'
-                  hx-target="#live-panel"
-                  hx-swap="innerHTML">
-            🚶 Wandering — Room 22 (Escalation test)
-          </button>
+          <form hx-post="/alerts/simulate-alert" hx-target="#live-panel" hx-swap="innerHTML">
+            <input type="hidden" name="facility_id" value="1" />
+            <input type="hidden" name="alert_type" value="Wandering" />
+            <input type="hidden" name="room_number" value="22" />
+            <input type="hidden" name="risk_level" value="high" />
+            <button type="submit" class="btn btn-ghost btn-full">🚶 Wandering — Room 22 (Escalation test)</button>
+          </form>
         </div>
       </div>
 
       <!-- Roster upload -->
       <div class="card">
-        <div class="card-header">👥 Upload Roster CSV</div>
+        <div class="card-header">👥 Upload Roster</div>
         <div class="card-body">
           <form hx-post="/roster/upload-csv"
                 hx-encoding="multipart/form-data"
                 hx-target="#roster-result"
                 hx-swap="innerHTML">
             <input type="hidden" name="facility_id" value="1" />
-            <label>CSV File</label>
-            <input type="file" name="file" accept=".csv"
-                   style="color:var(--muted);font-size:.85rem;width:100%" />
-            <button type="submit" class="btn btn-primary btn-full" style="margin-top:1rem">
+            <label>Roster File (CSV or XLSX)</label>
+            <input type="file" name="file" accept=".csv,.xlsx"
+                   style="font-size:.85rem" />
+            <button type="submit" class="btn btn-primary btn-full">
               Upload Roster
             </button>
           </form>
