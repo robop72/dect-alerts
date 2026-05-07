@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.db
+audio/
+uvicorn.log
+uvicorn_err.log
+cloudflared.exe
+cloudflared.log
