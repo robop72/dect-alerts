@@ -129,7 +129,7 @@ def twiml_handler(alert_id: int, db: Session = Depends(get_db)):
     lang  = lang_map.get(location.upper(), "en-US")
     voice = voice_map.get(location.upper(), "Polly.Joanna")
 
-    message = f"{alert.alert_type} in Room {alert.room_number}. Press 1 to acknowledge."
+    message = f"{alert.alert_type} in Room {alert.room_number}."
     action_url = f"{settings.PUBLIC_BASE_URL}/alerts/dtmf/{alert_id}"
 
     twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
